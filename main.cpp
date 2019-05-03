@@ -2,11 +2,105 @@
 #include <cmath>
 #include <fstream>
 #include <string>
+#include <cstdlib>
+
+#ifdef __CUDACC__
+#define CUDA __host__ __device__
+#else
+#define CUDA
+#endif
+
+class fp
+{
+public:
+	int numparts;
+	uint64_t *parts;
+	CUDA fp(int);
+	CUDA ~fp();
+	CUDA void increment();
+	CUDA void negate();
+	CUDA void add(fp);
+};
+
+fp::fp(int newnumparts)
+{
+	numparts = newnumparts;
+	parts = (uint64_t*) malloc(numparts * sizeof(uint64_t));
+
+	for(int i = 0; i < numparts; i++)
+	{
+		parts[i] = 0;
+	}
+}
+
+fp::~fp()
+{
+	free(parts);
+}
+
+void fp::increment()
+{
+	bool flag = true;
+	uint64_t temp;
+
+	for(int i = numparts - 1; i >= 0; i++)
+	{
+		if(flag)
+		{
+			temp = parts[i] + 1;
+			if(temp < parts[i])
+			{
+				flag = true;
+			}
+			parts[i] = temp;
+		}
+	}
+}
+
+void fp::negate()
+{
+	for(int i = 0; i < numparts; i++)
+	{
+		parts[i] ^= (uint64_t) 0xFFFFFFFFFFFFFFFF;
+	}
+
+	increment();
+}
+
+void fp::add(fp other)
+{
+	if(numparts != other.numparts)
+	{
+		return;
+	}
+
+	bool flag = false;
+	uint64_t partialsum;
+
+	for(int i = numparts - 1; i >= 0; i++)
+	{
+		if(flag)
+		{
+			partialsum = parts[i] + other.parts[i] + 1;
+		}
+		else
+		{
+			partialsum = parts[i] + other.parts[i];
+		}
+
+		if(partialsum < parts[i])
+		{
+			flag = true;
+		}
+		parts[i] = partialsum;
+	}
+}
 
 __global__
 void mandelbrot(int resx, int resy, double startx, double starty, double deltax, double deltay, long iters, long* out)
 {
 	int threadnum = blockIdx.x * blockDim.x + threadIdx.x;
+
 	int x = threadnum % resx;
 	int y = threadnum / resx;
 
@@ -113,7 +207,6 @@ int main()
 			else
 			{
 				image << colors[(output - 1) % 12] << "\t";
-				
 			}
 		}
 
