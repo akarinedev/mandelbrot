@@ -4,178 +4,17 @@
 #include <string>
 #include <cstdlib>
 
-#ifdef __CUDACC__
-#define CUDA __host__ __device__
-#else
-#define CUDA
-#endif
-
-class fp
-{
-public:
-	int numparts;
-	uint64_t *parts;
-	CUDA fp(int);
-	CUDA ~fp();
-	CUDA void increment();
-	CUDA void negate();
-	CUDA void add(fp);
-};
-
-fp::fp(int newnumparts)
-{
-	numparts = newnumparts;
-	parts = (uint64_t*) malloc(numparts * sizeof(uint64_t));
-
-	for(int i = 0; i < numparts; i++)
-	{
-		parts[i] = 0;
-	}
-}
-
-fp::~fp()
-{
-	free(parts);
-}
-
-void fp::increment()
-{
-	bool flag = true;
-	uint64_t temp;
-
-	for(int i = numparts - 1; i >= 0; i++)
-	{
-		if(flag)
-		{
-			temp = parts[i] + 1;
-			if(temp < parts[i])
-			{
-				flag = true;
-			}
-			parts[i] = temp;
-		}
-	}
-}
-
-void fp::negate()
-{
-	for(int i = 0; i < numparts; i++)
-	{
-		parts[i] ^= (uint64_t) 0xFFFFFFFFFFFFFFFF;
-	}
-
-	increment();
-}
-
-void fp::add(fp other)
-{
-	if(numparts != other.numparts)
-	{
-		return;
-	}
-
-	bool flag = false;
-	uint64_t partialsum;
-
-	for(int i = numparts - 1; i >= 0; i++)
-	{
-		if(flag)
-		{
-			partialsum = parts[i] + other.parts[i] + 1;
-		}
-		else
-		{
-			partialsum = parts[i] + other.parts[i];
-		}
-
-		if(partialsum < parts[i])
-		{
-			flag = true;
-		}
-		parts[i] = partialsum;
-	}
-}
-
-__global__
-void mandelbrot(int resx, int resy, double startx, double starty, double deltax, double deltay, long iters, long* out)
-{
-	int threadnum = blockIdx.x * blockDim.x + threadIdx.x;
-
-	int x = threadnum % resx;
-	int y = threadnum / resx;
-
-	if(x > resx || y > resy)
-	{
-		return;
-	}
-
-	double cx = startx + deltax * x;
-	double cy = starty + deltay * y;
-
-	double zx = 0.0;
-	double zy = 0.0;
-
-	double zx2 = 0.0;
-	double zy2 = 0.0;
-
-	double zxt, zyt;
-
-	//out[threadnum] = cx;
-	//return;
-
-	for(long i = 0; i < iters; i++)
-	{
-		zxt = zx2 - zy2 + cx;
-		zyt = 2 * zx * zy + cy;
-
-		zx = zxt;
-		zy = zyt;
-
-		zx2 = zx * zx;
-		zy2 = zy * zy;
-
-		if(zx2 + zy2 >= 4)
-		{
-			out[threadnum] = i;
-			return;
-		}
-	}
-
-	out[threadnum] = iters;
-	return;
-}
+#include "gpu.h"
 
 int main()
 {
-	long ITERS = 1000;
+	int RES_X = 100;
+	int RES_Y = 100;
+	int ITERS = 1000;
 
-	int RES_X = 10000;
-	int RES_Y = 10000;
-	int PIXELS = RES_X * RES_Y;
-	int THREADS_PER_BLOCK = 128;
-	int BLOCKS = (int) ceil((float)PIXELS / THREADS_PER_BLOCK);
+	long *out = (long*) malloc(RES_X * RES_Y * sizeof(long));
 
-	std::cout << "Blocks: " << BLOCKS << std::endl;
-	std::cout << "Threads per block: " << THREADS_PER_BLOCK << std::endl;
-
-	double WIN_L = -2.0;
-	double WIN_R = 2.0;
-	double WIN_B = -2.0;
-	double WIN_T = 2.0;
-
-	double DELTAX = (WIN_R - WIN_L) / (double) (RES_X - 1);
-	double DELTAY = (WIN_T - WIN_B) / (double) (RES_Y - 1);
-
-	long *out;
-	cudaMallocManaged(&out, PIXELS*sizeof(long));
-
-	std::cout << "Starting GPU Compute" << std::endl;
-
-	mandelbrot<<<BLOCKS, THREADS_PER_BLOCK>>>(RES_X, RES_Y, WIN_L, WIN_B, DELTAX, DELTAY, ITERS, out);
-
-	cudaDeviceSynchronize();
-
-	std::cout << "Finished GPU Compute" << std::endl;
+	gpu::mandelbrot(out, ITERS, RES_X, RES_Y);
 
 	std::ofstream image;
 	image.open("out.pgm");
@@ -214,7 +53,7 @@ int main()
 	}
 
 	image.close();
-	cudaFree(out);
+	free(out);
 
 	return 0;
 }
