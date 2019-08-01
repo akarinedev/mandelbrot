@@ -1,8 +1,11 @@
+CUDA_DIR := /usr/local/cuda-10.0/
+CUDA_ARCH := sm_75
+
 CX := clang++
-CX_FLAGS := -x cuda --cuda-path=/usr/local/cuda-10.0/ --cuda-gpu-arch=sm_75
+CX_FLAGS := -x cuda --cuda-path=$(CUDA_DIR) --cuda-gpu-arch=$(CUDA_ARCH)
 
 LK := clang
-LK_FLAGS := -L/usr/local/cuda10.0/lib64
+LK_FLAGS := -L$(CUDA_DIR)lib64/ -lcudart_static -ldl -lrt -pthread
 
 SRC_EXT := cpp
 OBJ_DIR := obj
