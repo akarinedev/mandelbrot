@@ -1,10 +1,8 @@
 #pragma once
 
 
-class gpu
+namespace gpu
 {
-public:
-	__host__ static void mandelbrot(long*, long, int, int);
-private:
-	__host__ __device__ static void pixelcalc(int, int, double, double, double, double, long, long*);
+	__host__ void mandelbrot(long*, long, int, int);
+	__global__ void pixelcalc(int, int, double, double, double, double, long, long*);
 };

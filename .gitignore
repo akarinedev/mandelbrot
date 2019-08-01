@@ -4,3 +4,7 @@ obj/*
 
 # Executables
 mandel
+
+#Outputs
+*.png
+*.pgm
