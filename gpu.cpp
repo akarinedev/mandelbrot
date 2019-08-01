@@ -4,7 +4,7 @@
 #include <cstdlib>
 #include <iostream>
 
-__global__
+__host__ __device__
 void gpu::pixelcalc(int resx, int resy, double startx, double starty, double deltax, double deltay, long iters, long* out)
 {
 	int threadnum = blockIdx.x * blockDim.x + threadIdx.x;

@@ -1,24 +1,15 @@
-CX_CPU := clang
-CX_CPU_FLAGS := -std=c++11
-
-CX_GPU := nvcc
-CX_GPU_FLAGS :=
-#--cuda-path=/usr/local/cuda --cuda-gpu-arch=sm_75 -L/usr/local/cuda/lib64/
+CX := clang++
+CX_FLAGS := -x cuda --cuda-path=/usr/local/cuda-10.0/ --cuda-gpu-arch=sm_75
 
 LK := clang
-LK_FLAGS :=
+LK_FLAGS := -L/usr/local/cuda10.0/lib64
 
-SRC_CPU := $(wildcard *.cpp)
-SRC_GPU := $(wildcard *.cu)
-OBJ_CPU := $(patsubst %.cpp, obj/cpu/%.o, $(SRC_CPU))
-OBJ_GPU := $(patsubst %.cu, obj/gpu/%.o, $(SRC_GPU))
+SRC := $(wildcard *.cpp)
+OBJ := $(patsubst %.cpp, obj/%.o, $(SRC))
 BIN := mandel
 
-$(BIN): $(OBJ_CPU) $(OBJ_GPU)
+$(BIN): $(OBJ)
 	$(LK) $(LK_FLAGS) $^ -o $@
 
-obj/cpu/%.o: %.cpp
-	$(CX_CPU) $(CX_CPU_FLAGS) -c $< -o $@
-
-obj/gpu/%.o: %.cu
-	$(CX_GPU) $(CX_GPU_FLAGS) -c $< -o $@
+obj/%.o: %.cpp
+	$(CX) $(CX_FLAGS) -c $< -o $@
