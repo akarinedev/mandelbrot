@@ -1,8 +1,9 @@
 #pragma once
 
+#include "frameinfo.h"
 
 namespace gpu
 {
-	__host__ void mandelbrot(long*, long, int, int);
-	__global__ void pixelcalc(int, int, double, double, double, double, long, long*);
+	__host__ void mandelbrot(long*, frameinfo);
+	__global__ void pixelcalc(long*, frameinfo);
 };

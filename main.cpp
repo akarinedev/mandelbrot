@@ -8,18 +8,26 @@
 
 int main()
 {
-	int RES_X = 100;
-	int RES_Y = 100;
-	int ITERS = 1000;
+	frameinfo frame;
 
-	long *out = (long*) malloc(RES_X * RES_Y * sizeof(long));
+	frame.winl = -2;
+	frame.winr = 2;
+	frame.winb = -2;
+	frame.wint = 2;
 
-	gpu::mandelbrot(out, ITERS, RES_X, RES_Y);
+	frame.resx = 100;
+	frame.resy = 100;
+
+	frame.iters = 1000;
+
+	long *out = (long*) malloc(frame.resx * frame.resy * sizeof(long));
+
+	gpu::mandelbrot(out, frame);
 
 	std::ofstream image;
 	image.open("out.pgm");
 	image << "P3" << std::endl;
-	image << RES_X << " " << RES_Y << std::endl;
+	image << frame.resx << " " << frame.resy << std::endl;
 	image << 255 << std::endl;
 
 	std::string colors[12] = {
@@ -30,16 +38,16 @@ int main()
 
 	long output;
 
-	for(int y = RES_Y - 1; y >= 0; y--)
+	for(int y = frame.resy - 1; y >= 0; y--)
 	{
-		for(int x = 0; x < RES_X; x++)
+		for(int x = 0; x < frame.resx; x++)
 		{
-			output = out[y * RES_Y + x];
+			output = out[y * frame.resy + x];
 			if(output == 0)
 			{
 				image << "255 255 255\t";
 			}
-			else if(output == ITERS)
+			else if(output == frame.iters)
 			{
 				image << "0 0 0\t";
 			}

@@ -4,21 +4,23 @@
 #include <cstdlib>
 #include <iostream>
 
+#include "frameinfo.h"
+
 __global__
-void gpu::pixelcalc(int resx, int resy, double startx, double starty, double deltax, double deltay, long iters, long* out)
+void gpu::pixelcalc(long* out, frameinfo frame)
 {
 	int threadnum = blockIdx.x * blockDim.x + threadIdx.x;
 
-	int x = threadnum % resx;
-	int y = threadnum / resx;
+	int x = threadnum % frame.resx;
+	int y = threadnum / frame.resx;
 
-	if(x > resx || y > resy)
+	if(x > frame.resx || y > frame.resy)
 	{
 		return;
 	}
 
-	double cx = startx + deltax * x;
-	double cy = starty + deltay * y;
+	double cx = frame.winl + frame.deltax * x;
+	double cy = frame.winb + frame.deltay * y;
 
 	double zx = 0.0;
 	double zy = 0.0;
@@ -31,7 +33,7 @@ void gpu::pixelcalc(int resx, int resy, double startx, double starty, double del
 	//out[threadnum] = cx;
 	//return;
 
-	for(long i = 0; i < iters; i++)
+	for(long i = 0; i < frame.iters; i++)
 	{
 		zxt = zx2 - zy2 + cx;
 		zyt = 2 * zx * zy + cy;
@@ -49,38 +51,29 @@ void gpu::pixelcalc(int resx, int resy, double startx, double starty, double del
 		}
 	}
 
-	out[threadnum] = iters;
+	out[threadnum] = frame.iters;
 	return;
 }
 
 __host__
-void gpu::mandelbrot(long* out2, long iters, int resx, int resy)
+void gpu::mandelbrot(long* out2, frameinfo frame)
 {
-	long ITERS = iters;
-
-	int RES_X = resx;
-	int RES_Y = resy;
-	int PIXELS = RES_X * RES_Y;
+	int PIXELS = frame.resx * frame.resy;
 	int THREADS_PER_BLOCK = 128;
 	int BLOCKS = (int) ceil((float)PIXELS / THREADS_PER_BLOCK);
 
 	std::cout << "Blocks: " << BLOCKS << std::endl;
 	std::cout << "Threads per block: " << THREADS_PER_BLOCK << std::endl;
 
-	double WIN_L = -2.0;
-	double WIN_R = 2.0;
-	double WIN_B = -2.0;
-	double WIN_T = 2.0;
-
-	double DELTAX = (WIN_R - WIN_L) / (double) (RES_X - 1);
-	double DELTAY = (WIN_T - WIN_B) / (double) (RES_Y - 1);
+	frame.deltax = (frame.winr - frame.winl) / (double) (frame.resx - 1);
+	frame.deltay = (frame.wint - frame.winb) / (double) (frame.resy - 1);
 
 	long *out;
 	cudaMallocManaged(&out, PIXELS*sizeof(long));
 
 	std::cout << "Starting GPU Compute" << std::endl;
 
-	pixelcalc<<<BLOCKS, THREADS_PER_BLOCK>>>(RES_X, RES_Y, WIN_L, WIN_B, DELTAX, DELTAY, ITERS, out);
+	pixelcalc<<<BLOCKS, THREADS_PER_BLOCK>>>(out, frame);
 
 	cudaDeviceSynchronize();
 
