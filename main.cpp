@@ -16,8 +16,8 @@ int main()
 	frame.winb = -2;
 	frame.wint = 2;
 
-	frame.resx = 100;
-	frame.resy = 100;
+	frame.resx = 10000;
+	frame.resy = 10000;
 
 	frame.iters = 1000;
 
@@ -35,7 +35,9 @@ int main()
 
 	unsigned char *image = (unsigned char*) malloc(frame.resx * frame.resy * sizeof(unsigned char) * 3);
 
-	long x, y, output, coord;
+	int x, y;
+	long output;
+	long coord;
 	int color;
 
 	for(x = 0; x < frame.resx; x++)

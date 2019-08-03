@@ -62,6 +62,7 @@ void gpu::mandelbrot(long* out2, frameinfo frame)
 	int THREADS_PER_BLOCK = 128;
 	int BLOCKS = (int) ceil((float)PIXELS / THREADS_PER_BLOCK);
 
+	std::cout << "Pixels: " << PIXELS << std::endl;
 	std::cout << "Blocks: " << BLOCKS << std::endl;
 	std::cout << "Threads per block: " << THREADS_PER_BLOCK << std::endl;
 

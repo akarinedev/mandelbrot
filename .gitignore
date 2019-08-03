@@ -6,5 +6,5 @@ obj/*
 mandel
 
 #Outputs
-*.png
 *.pgm
+*.png
