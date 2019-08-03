@@ -20,7 +20,7 @@ void gpu::pixelcalc(long* out, frameinfo frame)
 	}
 
 	double cx = frame.winl + frame.deltax * x;
-	double cy = frame.winb + frame.deltay * y;
+	double cy = frame.wint + frame.deltay * y;
 
 	double zx = 0.0;
 	double zy = 0.0;
@@ -66,7 +66,7 @@ void gpu::mandelbrot(long* out2, frameinfo frame)
 	std::cout << "Threads per block: " << THREADS_PER_BLOCK << std::endl;
 
 	frame.deltax = (frame.winr - frame.winl) / (double) (frame.resx - 1);
-	frame.deltay = (frame.wint - frame.winb) / (double) (frame.resy - 1);
+	frame.deltay = (frame.winb - frame.wint) / (double) (frame.resy - 1);
 
 	long *out;
 	cudaMallocManaged(&out, PIXELS*sizeof(long));

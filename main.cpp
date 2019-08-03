@@ -1,8 +1,9 @@
 #include <iostream>
 #include <cmath>
-#include <fstream>
-#include <string>
 #include <cstdlib>
+
+#define STB_IMAGE_WRITE_IMPLEMENTATION
+#include "stb_image_write.h"
 
 #include "gpu.h"
 
@@ -24,43 +25,57 @@ int main()
 
 	gpu::mandelbrot(out, frame);
 
-	std::ofstream image;
-	image.open("out.pgm");
-	image << "P3" << std::endl;
-	image << frame.resx << " " << frame.resy << std::endl;
-	image << 255 << std::endl;
-
-	std::string colors[12] = {
-		"255 0 0", "255 127 0", "255 255 0", "127 255 0",
-		"0 255 0", "0 255 127", "0 255 255", "0 127 255",
-		"0 0 255", "127 0 255", "255 0 255", "255 0 127"
+	int colormap[12][3] = {
+		{255, 0, 0}, {255, 127, 0}, {255, 255, 0}, {127, 255, 0},
+		{0, 255, 0}, {0, 255, 127}, {0, 255, 255}, {0, 127, 255},
+		{0, 0, 255}, {127, 0, 255}, {255, 0, 255}, {255, 0, 127}
 	};
 
-	long output;
+	//unsigned char *image = stbi_load("mandelbrot.png", frame.resx, frame.resy, 3, 0);
 
-	for(int y = frame.resy - 1; y >= 0; y--)
+	unsigned char *image = (unsigned char*) malloc(frame.resx * frame.resy * sizeof(unsigned char) * 3);
+
+	long x, y, output, coord;
+	int color;
+
+	for(x = 0; x < frame.resx; x++)
 	{
-		for(int x = 0; x < frame.resx; x++)
+		for(y = 0; y < frame.resy; y++)
 		{
+			coord = y * frame.resx * 3 + x * 3;
+
 			output = out[y * frame.resy + x];
-			if(output == 0)
+			if(output == 0) //Exited after 0 iterations (outside of 2 circle)
 			{
-				image << "255 255 255\t";
+				image[coord + 0] = 255;
+				image[coord + 1] = 255;
+				image[coord + 2] = 255;
+				//image[x][y] = png::rgb_pixel(255, 255, 255);
 			}
 			else if(output == frame.iters)
 			{
-				image << "0 0 0\t";
+				image[coord + 0] = 0;
+				image[coord + 1] = 0;
+				image[coord + 2] = 0;
+
+				//image[x][y] = png::rgb_pixel(0, 0, 0);
 			}
 			else
 			{
-				image << colors[(output - 1) % 12] << "\t";
+				color = (output - 1) % 12;
+
+				image[coord + 0] = colormap[color][0];
+				image[coord + 1] = colormap[color][1];
+				image[coord + 2] = colormap[color][2];
+
+				//image[x][y] = png::rgb_pixel(colormap[color][0], colormap[color][1], colormap[color][2]);
 			}
 		}
-
-		image << std::endl;
 	}
 
-	image.close();
+	stbi_write_png("mandelbrot.png", frame.resx, frame.resy, 3, image, frame.resx * 3 * sizeof(unsigned char));
+
+	free(image);
 	free(out);
 
 	return 0;
