@@ -19,8 +19,8 @@ void gpu::pixelcalc(unsigned long* out, frameinfo frame)
 		return;
 	}
 
-	double cx = frame.winl + frame.deltax * x;
-	double cy = frame.wint + frame.deltay * y;
+	double cx = frame.centerx - frame.scalex + frame.deltax * x;
+	double cy = frame.centery - frame.scaley + frame.deltay * y;
 
 	double zx = 0.0;
 	double zy = 0.0;
@@ -63,14 +63,21 @@ void gpu::mandelbrot(unsigned long* out, frameinfo frame)
 	std::cout << "Threads per block: " << threads_per_block << std::endl;
 	std::cout << "Blocks: " << blocks << std::endl;
 
-	frame.deltax = (frame.winr - frame.winl) / (double) (frame.resx - 1);
-	frame.deltay = (frame.winb - frame.wint) / (double) (frame.resy - 1);
+	if(frame.resx > frame.resy)
+	{
+		frame.scaley = frame.scale;
+		frame.scalex = frame.scale * frame.resx / frame.resy;
+	}
+	else
+	{
+		frame.scalex = frame.scale;
+		frame.scaley = frame.scale * frame.resy / frame.resx;
+	}
 
-	std::cout << "Starting GPU Compute" << std::endl;
+	frame.deltax = frame.scalex / frame.resx * 2;
+	frame.deltay = frame.scaley / frame.resy * 2;
 
 	pixelcalc<<<blocks, threads_per_block>>>(out, frame);
 
 	cudaDeviceSynchronize();
-
-	std::cout << "Finished GPU Compute" << std::endl;
 }

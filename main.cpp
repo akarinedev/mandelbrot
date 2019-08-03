@@ -1,51 +1,50 @@
-#include <iostream>
-#include <cmath>
+//Standard Libs
 #include <cstdlib>
+#include <cmath>
+#include <iostream>
 
+//String stuff
+#include <string>
+#include <sstream>
+#include <iomanip>
+
+//Image writing
 #define STB_IMAGE_WRITE_IMPLEMENTATION
 #include "stb_image_write.h"
 
+//My code
+#include "frameinfo.h"
 #include "gpu.h"
 
-int main()
+const int colormap[12][3] = {
+	{255, 0, 0}, {255, 127, 0}, {255, 255, 0}, {127, 255, 0},
+	{0, 255, 0}, {0, 255, 127}, {0, 255, 255}, {0, 127, 255},
+	{0, 0, 255}, {127, 0, 255}, {255, 0, 255}, {255, 0, 127}
+};
+
+const int CHARS_PER_PIXEL = 3;
+
+void renderImage(char *name, unsigned long *in, frameinfo frame)
 {
-	frameinfo frame;
+	int resx = frame.resx;
+	int resy = frame.resy;
+	unsigned long iters = frame.iters;
 
-	frame.winl = -2;
-	frame.winr = 2;
-	frame.winb = -2;
-	frame.wint = 2;
-
-	frame.resx = 10000;
-	frame.resy = 10000;
-
-	frame.iters = 1000;
-
-	unsigned long *out;
-	cudaMallocManaged(&out, frame.resx * frame.resy * sizeof(unsigned long));
-
-	gpu::mandelbrot(out, frame);
-
-	int colormap[12][3] = {
-		{255, 0, 0}, {255, 127, 0}, {255, 255, 0}, {127, 255, 0},
-		{0, 255, 0}, {0, 255, 127}, {0, 255, 255}, {0, 127, 255},
-		{0, 0, 255}, {127, 0, 255}, {255, 0, 255}, {255, 0, 127}
-	};
-
-	unsigned char *image = (unsigned char*) malloc(frame.resx * frame.resy * sizeof(unsigned char) * 3);
+	unsigned char *image = (unsigned char*) malloc(resx * resy * sizeof(unsigned char) * CHARS_PER_PIXEL);
 
 	int x, y;
-	long output;
+	unsigned long output;
 	long coord;
 	int color;
 
-	for(x = 0; x < frame.resx; x++)
+	for(x = 0; x < resx; x++)
 	{
-		for(y = 0; y < frame.resy; y++)
+		for(y = 0; y < resy; y++)
 		{
-			coord = y * frame.resx * 3 + x * 3;
+			coord = y * resx + x;
+			output = in[y * resx + x];
+			coord *= CHARS_PER_PIXEL;
 
-			output = out[y * frame.resy + x];
 			if(output == 0) //Exited after 0 iterations (outside of 2 circle)
 			{
 				image[coord + 0] = 255;
@@ -53,7 +52,7 @@ int main()
 				image[coord + 2] = 255;
 				//image[x][y] = png::rgb_pixel(255, 255, 255);
 			}
-			else if(output == frame.iters)
+			else if(output == iters)
 			{
 				image[coord + 0] = 0;
 				image[coord + 1] = 0;
@@ -74,9 +73,43 @@ int main()
 		}
 	}
 
-	stbi_write_png("mandelbrot.png", frame.resx, frame.resy, 3, image, frame.resx * 3 * sizeof(unsigned char));
+	stbi_write_png(name, resx, resy, CHARS_PER_PIXEL, image, resx * sizeof(unsigned char) * CHARS_PER_PIXEL);
 
 	free(image);
+}
+
+int main()
+{
+	frameinfo frame;
+	frame.resx = 1920;
+	frame.resy = 1080;
+
+	unsigned long *out;
+	cudaMallocManaged(&out, frame.resx * frame.resy * sizeof(unsigned long));
+
+	for(int i = 0; i < 500; i++)
+	{
+		frame.centerx = 0;
+		frame.centery = -1;
+
+		frame.scale = 2 / pow(10, i/(float)100);
+		frame.iters = 1000;
+
+		std::cout << "Starting GPU Compute" << std::endl;
+		gpu::mandelbrot(out, frame);
+		std::cout << "Finished GPU Compute" << std::endl;
+
+		char name[] = "render/00000000.png\0";
+		int n = 1;
+		for(int j = 7; j >= 0; j--)
+		{
+			name[7+j] = i % (n*10) / n + 48;
+			n *= 10;
+		}
+		std::cout << "Saving Image: " << name << std::endl;
+		renderImage(name, out, frame);
+	}
+
 	cudaFree(out);
 
 	return 0;
