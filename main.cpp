@@ -21,7 +21,8 @@ int main()
 
 	frame.iters = 1000;
 
-	long *out = (long*) malloc(frame.resx * frame.resy * sizeof(long));
+	unsigned long *out;
+	cudaMallocManaged(&out, frame.resx * frame.resy * sizeof(unsigned long));
 
 	gpu::mandelbrot(out, frame);
 
@@ -30,8 +31,6 @@ int main()
 		{0, 255, 0}, {0, 255, 127}, {0, 255, 255}, {0, 127, 255},
 		{0, 0, 255}, {127, 0, 255}, {255, 0, 255}, {255, 0, 127}
 	};
-
-	//unsigned char *image = stbi_load("mandelbrot.png", frame.resx, frame.resy, 3, 0);
 
 	unsigned char *image = (unsigned char*) malloc(frame.resx * frame.resy * sizeof(unsigned char) * 3);
 
@@ -78,7 +77,7 @@ int main()
 	stbi_write_png("mandelbrot.png", frame.resx, frame.resy, 3, image, frame.resx * 3 * sizeof(unsigned char));
 
 	free(image);
-	free(out);
+	cudaFree(out);
 
 	return 0;
 }

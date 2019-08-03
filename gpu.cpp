@@ -7,7 +7,7 @@
 #include "frameinfo.h"
 
 __global__
-void gpu::pixelcalc(long* out, frameinfo frame)
+void gpu::pixelcalc(unsigned long* out, frameinfo frame)
 {
 	int threadnum = blockIdx.x * blockDim.x + threadIdx.x;
 
@@ -29,9 +29,6 @@ void gpu::pixelcalc(long* out, frameinfo frame)
 	double zy2 = 0.0;
 
 	double zxt, zyt;
-
-	//out[threadnum] = cx;
-	//return;
 
 	for(long i = 0; i < frame.iters; i++)
 	{
@@ -56,34 +53,24 @@ void gpu::pixelcalc(long* out, frameinfo frame)
 }
 
 __host__
-void gpu::mandelbrot(long* out2, frameinfo frame)
+void gpu::mandelbrot(unsigned long* out, frameinfo frame)
 {
-	int PIXELS = frame.resx * frame.resy;
-	int THREADS_PER_BLOCK = 128;
-	int BLOCKS = (int) ceil((float)PIXELS / THREADS_PER_BLOCK);
+	int pixels = frame.resx * frame.resy;
+	int threads_per_block = 128;
+	int blocks = (int) ceil((float) pixels / threads_per_block);
 
-	std::cout << "Pixels: " << PIXELS << std::endl;
-	std::cout << "Blocks: " << BLOCKS << std::endl;
-	std::cout << "Threads per block: " << THREADS_PER_BLOCK << std::endl;
+	std::cout << "Pixels: " << pixels << std::endl;
+	std::cout << "Threads per block: " << threads_per_block << std::endl;
+	std::cout << "Blocks: " << blocks << std::endl;
 
 	frame.deltax = (frame.winr - frame.winl) / (double) (frame.resx - 1);
 	frame.deltay = (frame.winb - frame.wint) / (double) (frame.resy - 1);
 
-	long *out;
-	cudaMallocManaged(&out, PIXELS*sizeof(long));
-
 	std::cout << "Starting GPU Compute" << std::endl;
 
-	pixelcalc<<<BLOCKS, THREADS_PER_BLOCK>>>(out, frame);
+	pixelcalc<<<blocks, threads_per_block>>>(out, frame);
 
 	cudaDeviceSynchronize();
 
 	std::cout << "Finished GPU Compute" << std::endl;
-
-	for(int x = 0; x < PIXELS; x++)
-	{
-		out2[x] = out[x];
-	}
-
-	cudaFree(out);
 }
