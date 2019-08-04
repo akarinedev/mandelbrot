@@ -6,7 +6,5 @@ obj/*
 mandel
 
 #Outputs
-*.pgm
-*.bmp
-*.png
-*.mp4
+imgs/
+movs/

@@ -59,10 +59,6 @@ void gpu::mandelbrot(unsigned long* out, frameinfo frame)
 	int threads_per_block = 128;
 	int blocks = (int) ceil((float) pixels / threads_per_block);
 
-	std::cout << "Pixels: " << pixels << std::endl;
-	std::cout << "Threads per block: " << threads_per_block << std::endl;
-	std::cout << "Blocks: " << blocks << std::endl;
-
 	if(frame.resx > frame.resy)
 	{
 		frame.scaley = frame.scale;

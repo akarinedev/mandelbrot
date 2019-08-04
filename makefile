@@ -24,5 +24,5 @@ $(OBJ_DIR)/%.$(OBJ_EXT): %.$(SRC_EXT)
 clean:
 	rm $(OBJ_DIR)/*.$(OBJ_EXT)
 	rm $(BIN)
-	rm render/*.bmp
-	rm render/*.mp4
+	rm imgs/*
+	rm movs/*
