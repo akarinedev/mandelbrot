@@ -5,8 +5,7 @@
 
 //String stuff
 #include <string>
-#include <sstream>
-#include <iomanip>
+#include <stdio.h>
 
 //Image writing
 #define STB_IMAGE_WRITE_IMPLEMENTATION
@@ -73,7 +72,8 @@ void renderImage(char *name, unsigned long *in, frameinfo frame)
 		}
 	}
 
-	stbi_write_png(name, resx, resy, CHARS_PER_PIXEL, image, resx * sizeof(unsigned char) * CHARS_PER_PIXEL);
+	//stbi_write_png(name, resx, resy, CHARS_PER_PIXEL, image, resx * sizeof(unsigned char) * CHARS_PER_PIXEL);
+	stbi_write_bmp(name, resx, resy, CHARS_PER_PIXEL, image);
 
 	free(image);
 }
@@ -87,7 +87,7 @@ int main()
 	unsigned long *out;
 	cudaMallocManaged(&out, frame.resx * frame.resy * sizeof(unsigned long));
 
-	for(int i = 0; i < 500; i++)
+	for(int i = 0; i < 2500; i++)
 	{
 		frame.centerx = 0;
 		frame.centery = -1;
@@ -99,13 +99,9 @@ int main()
 		gpu::mandelbrot(out, frame);
 		std::cout << "Finished GPU Compute" << std::endl;
 
-		char name[] = "render/00000000.png\0";
-		int n = 1;
-		for(int j = 7; j >= 0; j--)
-		{
-			name[7+j] = i % (n*10) / n + 48;
-			n *= 10;
-		}
+		char name[] = "100";
+		snprintf(name, 100, "render/%08d.bmp", i);
+
 		std::cout << "Saving Image: " << name << std::endl;
 		renderImage(name, out, frame);
 	}

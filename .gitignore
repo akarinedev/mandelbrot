@@ -7,5 +7,6 @@ mandel
 
 #Outputs
 *.pgm
+*.bmp
 *.png
 *.mp4
