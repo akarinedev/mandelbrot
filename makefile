@@ -4,8 +4,8 @@ CUDA_ARCH := sm_75
 CXX := clang++
 LNK := $(CUDA_DIR)bin/nvcc
 
-CXX_FLAGS := -x cuda --cuda-path=$(CUDA_DIR) --cuda-gpu-arch=$(CUDA_ARCH) -fPIC
-LNK_FLAGS := -L$(CUDA_DIR)lib64/ -lcudart_static
+CXX_FLAGS := -x cuda --cuda-path=$(CUDA_DIR) --cuda-gpu-arch=$(CUDA_ARCH) -fPIC -std=c++11
+LNK_FLAGS := -L$(CUDA_DIR)lib64/ -lcudart_static -lncurses
 
 SRC_EXT := cpp
 OBJ_DIR := obj

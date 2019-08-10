@@ -1,3 +1,5 @@
+#include "main.h"
+
 //Standard Libs
 #include <cstdlib>
 #include <cmath>
@@ -11,40 +13,196 @@
 #define STB_IMAGE_WRITE_IMPLEMENTATION
 #include "stb_image_write.h"
 
+//UI
+#include <ncurses.h>
+
 //My code
 #include "frameinfo.h"
 #include "gpu.h"
+//#include "fp.h"
+
+#include <unistd.h>
 
 const int CHARS_PER_PIXEL = 3;
 
-unsigned char *getColorMap(int numcolors)
+int main(int argc, char **argv)
 {
-	unsigned char *colormap = (unsigned char*) malloc(numcolors * CHARS_PER_PIXEL * sizeof(unsigned char));
+//	fp yee(1, 1);
+//	yee.zero();
+//	std::cout << yee.toString() << std::endl;
 
-	double deltaangle = (float) 360 / numcolors;
-	for(int i = 0; i < numcolors; i++)
+//	return 0;
+
+	if(argc != 2)
 	{
-		double h = deltaangle * i / 60;
-		double x = (1 - std::abs(std::fmod(h, 2) - 1)) * 255;
-
-		if(h <= 1){
-			colormap[CHARS_PER_PIXEL * i + 0] = 255; colormap[CHARS_PER_PIXEL * i + 1] = x; colormap[CHARS_PER_PIXEL * i + 2] = 0;}
-		else if(h <= 2){
-			colormap[CHARS_PER_PIXEL * i + 0] = x; colormap[CHARS_PER_PIXEL * i + 1] = 255; colormap[CHARS_PER_PIXEL * i + 2] = 0;}
-		else if(h <= 3){
-			colormap[CHARS_PER_PIXEL * i + 0] = 0; colormap[CHARS_PER_PIXEL * i + 1] = 255; colormap[CHARS_PER_PIXEL * i + 2] = x;}
-		else if(h <= 4){
-			colormap[CHARS_PER_PIXEL * i + 0] = 0; colormap[CHARS_PER_PIXEL * i + 1] = x; colormap[CHARS_PER_PIXEL * i + 2] = 255;}
-		else if(h <= 5){
-			colormap[CHARS_PER_PIXEL * i + 0] = x; colormap[CHARS_PER_PIXEL * i + 1] = 0; colormap[CHARS_PER_PIXEL * i + 2] = 255;}
-		else if(h <= 6){
-			colormap[CHARS_PER_PIXEL * i + 0] = 255; colormap[CHARS_PER_PIXEL * i + 1] = 0; colormap[CHARS_PER_PIXEL * i + 2] = x;}
+		std::cout << "Parameter needed" << std::endl;
+		return 1;
 	}
 
-	return colormap;
+	char *arg = argv[1];
+
+	if(strncmp(arg, "i", 1) == 0)
+	{
+		interactive();
+	}
+	else if(strncmp(arg, "r", 1) == 0)
+	{
+		headless();
+	}
+	else
+	{
+		std::cout << "i or r" << std::endl;
+	}
+
+	return 0;
 }
 
-void renderImage(char *name, unsigned long *in, frameinfo frame, unsigned char *colormap, int numcolors)
+void renderToNC(WINDOW* win, unsigned long* img, frameinfo frame)
+{
+	unsigned long val;
+
+	for(int x = 0; x < frame.resx; x++)
+	{
+		for(int y = 0; y < frame.resy; y++)
+		{
+			val = img[y * frame.resx + x];
+
+//			setcolor(0, val % 7);
+			attron(COLOR_PAIR(1));
+			mvwprintw(win, y, x, "%d", val % 10);
+
+//			if(val == 1)
+//			{
+//				attron(COLOR_PAIR(1));
+//				mvwprintw(win, x, y, "X");
+//			}
+//			else
+//			{
+//				attron(COLOR_PAIR(0));
+//				mvwprintw(win, x, y, "O");
+//			}
+		}
+	}
+
+	wrefresh(win);
+}
+
+void interactive()
+{
+	initscr();
+	cbreak();
+	noecho();
+
+	WINDOW * win = newwin(LINES, COLS, 0, 0);
+
+	frameinfo frame;
+	frame.resx = COLS;
+	frame.resy = LINES;
+	frame.iters = 100;
+
+	frame.centerx = 0;
+	frame.centery = 0;
+	frame.scale = 2;
+
+	unsigned long *img;
+	cudaMallocManaged(&img, frame.resx * frame.resy * sizeof(unsigned long));
+	gpu::mandelbrot(img, frame);
+
+	start_color();
+	init_pair(1, COLOR_WHITE, COLOR_GREEN);
+	renderToNC(win, img, frame);
+
+//	mvwprintw(win, 0, 0, "res: %dx%d", frame.resx, frame.resy);
+//	wrefresh(win);
+
+	int ch;
+	bool running = true;
+
+	while(running)
+	{
+		ch = wgetch(win);
+		switch(ch)
+		{
+			case 'q':
+				running = false;
+				break;
+			case 'a':
+				frame.centerx -= frame.scale / 10;
+				gpu::mandelbrot(img, frame);
+				renderToNC(win, img, frame);
+				break;
+			case 'd':
+				frame.centerx += frame.scale / 10;
+				gpu::mandelbrot(img, frame);
+				renderToNC(win, img, frame);
+				break;
+			case 'w':
+				frame.centery -= frame.scale / 10;
+				gpu::mandelbrot(img, frame);
+				renderToNC(win, img, frame);
+				break;
+			case 's':
+				frame.centery += frame.scale / 10;
+				gpu::mandelbrot(img, frame);
+				renderToNC(win, img, frame);
+				break;
+			case 'r':
+				frame.scale /= 1.5;
+				gpu::mandelbrot(img, frame);
+				renderToNC(win, img, frame);
+				break;
+			case 'f':
+				frame.scale *= 1.5;
+				frame.scale = (frame.scale > 2) ? 2 : frame.scale;
+				gpu::mandelbrot(img, frame);
+				renderToNC(win, img, frame);
+				break;
+		}
+	}
+
+	cudaFree(img);
+
+	endwin();
+}
+
+void headless()
+{
+	frameinfo frame;
+	frame.resx = 1920;
+	frame.resy = 1080;
+
+	unsigned char *colormap = getColorMap(32);
+
+	unsigned long *out;
+	cudaMallocManaged(&out, frame.resx * frame.resy * sizeof(unsigned long));
+
+	const double FPS = 60;
+	const double ZOOM_RATE = 0.3333;
+
+	for(int i = 0; i < 50 * FPS; i++)
+	{
+		frame.centerx = 0;
+		frame.centery = -1;
+
+		frame.scale = 2 / pow(10, i * ZOOM_RATE / FPS);
+		frame.iters = 1000;
+
+		std::cout << "Rendering Frame #" << i << ", scale=" << frame.scale << std::endl;
+		gpu::mandelbrot(out, frame);
+
+		char name[] = "100";
+		snprintf(name, 100, "imgs/%08d.tga", i);
+
+		std::cout << "Saving Image: " << name << std::endl;
+		saveImage(name, out, frame, colormap, 32);
+	}
+
+	cudaFree(out);
+
+	free(colormap);
+}
+
+void saveImage(char *name, unsigned long *in, frameinfo frame, unsigned char *colormap, int numcolors)
 {
 	int resx = frame.resx;
 	int resy = frame.resy;
@@ -99,41 +257,31 @@ void renderImage(char *name, unsigned long *in, frameinfo frame, unsigned char *
 	free(image);
 }
 
-int main()
+unsigned char *getColorMap(int numcolors)
 {
-	frameinfo frame;
-	frame.resx = 1920;
-	frame.resy = 1080;
+	unsigned char *colormap = (unsigned char*) malloc(numcolors * CHARS_PER_PIXEL * sizeof(unsigned char));
 
-	unsigned long *out;
-	cudaMallocManaged(&out, frame.resx * frame.resy * sizeof(unsigned long));
-
-	unsigned char *colormap = getColorMap(32);
-
-	const double FPS = 60;
-	const double ZOOM_RATE = 0.3333;
-
-	for(int i = 0; i < 50 * FPS; i++)
+	double deltaangle = (float) 360 / numcolors;
+	for(int i = 0; i < numcolors; i++)
 	{
-		frame.centerx = 0;
-		frame.centery = -1;
+		double h = deltaangle * i / 60;
+		double x = (1 - std::abs(std::fmod(h, 2) - 1)) * 255;
 
-		frame.scale = 2 / pow(10, i * ZOOM_RATE / FPS);
-		frame.iters = 1000;
-
-		std::cout << "Rendering Frame #" << i << ", scale=" << frame.scale << std::endl;
-		gpu::mandelbrot(out, frame);
-
-		char name[] = "100";
-		snprintf(name, 100, "imgs/%08d.tga", i);
-
-		std::cout << "Saving Image: " << name << std::endl;
-		renderImage(name, out, frame, colormap, 32);
+		if(h <= 1){
+			colormap[CHARS_PER_PIXEL * i + 0] = 255; colormap[CHARS_PER_PIXEL * i + 1] = x; colormap[CHARS_PER_PIXEL * i + 2] = 0;}
+		else if(h <= 2){
+			colormap[CHARS_PER_PIXEL * i + 0] = x; colormap[CHARS_PER_PIXEL * i + 1] = 255; colormap[CHARS_PER_PIXEL * i + 2] = 0;}
+		else if(h <= 3){
+			colormap[CHARS_PER_PIXEL * i + 0] = 0; colormap[CHARS_PER_PIXEL * i + 1] = 255; colormap[CHARS_PER_PIXEL * i + 2] = x;}
+		else if(h <= 4){
+			colormap[CHARS_PER_PIXEL * i + 0] = 0; colormap[CHARS_PER_PIXEL * i + 1] = x; colormap[CHARS_PER_PIXEL * i + 2] = 255;}
+		else if(h <= 5){
+			colormap[CHARS_PER_PIXEL * i + 0] = x; colormap[CHARS_PER_PIXEL * i + 1] = 0; colormap[CHARS_PER_PIXEL * i + 2] = 255;}
+		else if(h <= 6){
+			colormap[CHARS_PER_PIXEL * i + 0] = 255; colormap[CHARS_PER_PIXEL * i + 1] = 0; colormap[CHARS_PER_PIXEL * i + 2] = x;}
 	}
 
-	cudaFree(out);
-
-	free(colormap);
-
-	return 0;
+	return colormap;
 }
+
+
