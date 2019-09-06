@@ -24,5 +24,4 @@ $(OBJ_DIR)/%.$(OBJ_EXT): %.$(SRC_EXT)
 clean:
 	rm $(OBJ_DIR)/*.$(OBJ_EXT)
 	rm $(BIN)
-	rm imgs/*
-	rm movs/*
+	rm imgs/* movs/*

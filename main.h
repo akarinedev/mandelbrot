@@ -5,7 +5,7 @@
 #include "frameinfo.h"
 
 int main(int, char**);
-void renderToNC(WINDOW*, unsigned long*, frameinfo);
+void renderToNC(unsigned long*, frameinfo);
 void interactive();
 
 void headless();

@@ -22,6 +22,7 @@
 //#include "fp.h"
 
 #include <unistd.h>
+#include "cuda_profiler_api.h"
 
 const int CHARS_PER_PIXEL = 3;
 
@@ -54,10 +55,12 @@ int main(int argc, char **argv)
 		std::cout << "i or r" << std::endl;
 	}
 
+	cudaProfilerStop();
+
 	return 0;
 }
 
-void renderToNC(WINDOW* win, unsigned long* img, frameinfo frame)
+void renderToNC(unsigned long* img, frameinfo frame)
 {
 	unsigned long val;
 
@@ -67,24 +70,29 @@ void renderToNC(WINDOW* win, unsigned long* img, frameinfo frame)
 		{
 			val = img[y * frame.resx + x];
 
-//			setcolor(0, val % 7);
-			attron(COLOR_PAIR(1));
-			mvwprintw(win, y, x, "%d", val % 10);
+//			attron(COLOR_PAIR(val % 5 + 2));
+//			mvprintw(y, x, "%d", val % 10);
 
-//			if(val == 1)
-//			{
-//				attron(COLOR_PAIR(1));
-//				mvwprintw(win, x, y, "X");
-//			}
-//			else
-//			{
-//				attron(COLOR_PAIR(0));
-//				mvwprintw(win, x, y, "O");
-//			}
+			if(val == frame.iters)
+			{
+				attron(COLOR_PAIR(1));
+				mvprintw(y, x, "%d", val % 10);
+			}
+			else
+			{
+				attron(COLOR_PAIR(val % 5 + 2));
+				mvprintw(y, x, "%d", val % 10);
+			}
 		}
 	}
 
-	wrefresh(win);
+	attron(COLOR_PAIR(1));
+	mvprintw(0, 0, "res=%dx%d", frame.resx, frame.resy);
+	mvprintw(1, 0, "center=%fx%f", frame.centerx, frame.centery);
+	mvprintw(2, 0, "scale=%e", frame.scale);
+	mvprintw(3, 0, "iters=%d", frame.iters);
+
+	refresh();
 }
 
 void interactive()
@@ -93,12 +101,12 @@ void interactive()
 	cbreak();
 	noecho();
 
-	WINDOW * win = newwin(LINES, COLS, 0, 0);
+//	WINDOW * win = newwin(LINES, COLS, 0, 0);
 
 	frameinfo frame;
 	frame.resx = COLS;
 	frame.resy = LINES;
-	frame.iters = 100;
+	frame.iters = 1000;
 
 	frame.centerx = 0;
 	frame.centery = 0;
@@ -109,8 +117,13 @@ void interactive()
 	gpu::mandelbrot(img, frame);
 
 	start_color();
-	init_pair(1, COLOR_WHITE, COLOR_GREEN);
-	renderToNC(win, img, frame);
+	init_pair(1, COLOR_WHITE, COLOR_BLACK);
+	init_pair(2, COLOR_WHITE, COLOR_RED);
+	init_pair(3, COLOR_WHITE, COLOR_YELLOW);
+	init_pair(4, COLOR_WHITE, COLOR_GREEN);
+	init_pair(5, COLOR_WHITE, COLOR_BLUE);
+	init_pair(6, COLOR_WHITE, COLOR_MAGENTA);
+	renderToNC(img, frame);
 
 //	mvwprintw(win, 0, 0, "res: %dx%d", frame.resx, frame.resy);
 //	wrefresh(win);
@@ -120,7 +133,7 @@ void interactive()
 
 	while(running)
 	{
-		ch = wgetch(win);
+		ch = getch();
 		switch(ch)
 		{
 			case 'q':
@@ -129,33 +142,43 @@ void interactive()
 			case 'a':
 				frame.centerx -= frame.scale / 10;
 				gpu::mandelbrot(img, frame);
-				renderToNC(win, img, frame);
+				renderToNC(img, frame);
 				break;
 			case 'd':
 				frame.centerx += frame.scale / 10;
 				gpu::mandelbrot(img, frame);
-				renderToNC(win, img, frame);
+				renderToNC(img, frame);
 				break;
 			case 'w':
 				frame.centery -= frame.scale / 10;
 				gpu::mandelbrot(img, frame);
-				renderToNC(win, img, frame);
+				renderToNC(img, frame);
 				break;
 			case 's':
 				frame.centery += frame.scale / 10;
 				gpu::mandelbrot(img, frame);
-				renderToNC(win, img, frame);
+				renderToNC(img, frame);
 				break;
 			case 'r':
 				frame.scale /= 1.5;
 				gpu::mandelbrot(img, frame);
-				renderToNC(win, img, frame);
+				renderToNC(img, frame);
 				break;
 			case 'f':
 				frame.scale *= 1.5;
 				frame.scale = (frame.scale > 2) ? 2 : frame.scale;
 				gpu::mandelbrot(img, frame);
-				renderToNC(win, img, frame);
+				renderToNC(img, frame);
+				break;
+			case 't':
+				frame.iters *= 10;
+				gpu::mandelbrot(img, frame);
+				renderToNC(img, frame);
+				break;
+			case 'g':
+				frame.iters /= 10;
+				gpu::mandelbrot(img, frame);
+				renderToNC(img, frame);
 				break;
 		}
 	}
@@ -179,13 +202,13 @@ void headless()
 	const double FPS = 60;
 	const double ZOOM_RATE = 0.3333;
 
-	for(int i = 0; i < 50 * FPS; i++)
+	for(int i = 0; i < 1 * FPS; i++)
 	{
 		frame.centerx = 0;
 		frame.centery = -1;
 
 		frame.scale = 2 / pow(10, i * ZOOM_RATE / FPS);
-		frame.iters = 1000;
+		frame.iters = 100000;
 
 		std::cout << "Rendering Frame #" << i << ", scale=" << frame.scale << std::endl;
 		gpu::mandelbrot(out, frame);
