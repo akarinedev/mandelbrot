@@ -197,18 +197,20 @@ void headless()
 	unsigned long *out;
 	cudaMallocManaged(&out, frame.resx * frame.resy * sizeof(unsigned long));
 
+	const double VID_LENGTH = 20;
 	const double FPS = 60;
-	const double ZOOM_RATE = 0.3333;
+	const double ZOOM_PER_SECOND = 0.3333;
+	const double ZOOM_PER_FRAME = ZOOM_PER_SECOND / FPS;
 
-	for(int i = 0; i < 1 * FPS; i++)
+	for(int i = 0; i < VID_LENGTH * FPS; i++)
 	{
 		frame.centerx = 0;
 		frame.centery = -1;
 
-		frame.scale = 2 / pow(10, i * ZOOM_RATE / FPS);
+		frame.scale = 2 / pow(10, i * ZOOM_PER_FRAME);
 		frame.iters = 100000;
 
-		std::cout << "Rendering Frame #" << i << ", scale=" << frame.scale << std::endl;
+		std::cout << "Rendering Frame #" << i << " / " << VID_LENGTH * FPS << ", scale=" << frame.scale << std::endl;
 		gpu::mandelbrot(out, frame);
 
 		char name[] = "100";
