@@ -4,13 +4,13 @@ Completed:
 Absolute Value Optimization - Enabled with OPT_ABS linker flag
 
 TODO:
+Dynamic Iterations
 Multiplication through Squaring
 Inner Bulb Checking
-Fixed-Point Arithmetic
-Arbitrary-Precision
-Dynamic Iterations
-Karatsuba Multiplication
 CUDA PTX
+Fixed-Point Arithmetic
+Changing precision
+Karatsuba Multiplication
 
 Not doing:
 Multi-GPU - Too difficult
