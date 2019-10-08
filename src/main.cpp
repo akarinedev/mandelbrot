@@ -55,8 +55,6 @@ int main(int argc, char **argv)
 		std::cout << "i or r" << std::endl;
 	}
 
-	cudaProfilerStop();
-
 	return 0;
 }
 

@@ -41,7 +41,11 @@ void gpu::pixelcalc(unsigned long* out, frameinfo frame)
 		zx2 = zx * zx;
 		zy2 = zy * zy;
 
+		#ifdef abs
 		if(zx2 + zy2 >= 4)
+		#else
+		if(sqrt(zx2 + zy2) >= 2)
+		#endif
 		{
 			out[threadnum] = i;
 			return;
