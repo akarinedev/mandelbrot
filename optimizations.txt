@@ -1,0 +1,16 @@
+Optimizations:
+
+Completed:
+Absolute Value Optimization - Enabled with OPT_ABS linker flag
+
+TODO:
+Multiplication through Squaring
+Inner Bulb Checking
+Fixed-Point Arithmetic
+Arbitrary-Precision
+Dynamic Iterations
+Karatsuba Multiplication
+CUDA PTX
+
+Not doing:
+Multi-GPU - Too difficult
