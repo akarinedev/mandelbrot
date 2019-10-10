@@ -1,4 +1,4 @@
-#include "main.h"
+#include "render.h"
 
 //Standard Libs
 #include <cstdlib>
