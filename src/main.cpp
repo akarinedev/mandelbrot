@@ -197,9 +197,9 @@ void headless()
 	unsigned long *out;
 	cudaMallocManaged(&out, frame.resx * frame.resy * sizeof(unsigned long));
 
-	const double VID_LENGTH = 60;
-	const double FPS = 30;
-	const double ZOOM_PER_SECOND = 0.3333;
+	const double VID_LENGTH = 1; //40
+	const double FPS = 2; //30
+	const double ZOOM_PER_SECOND = 0.25; //.333
 	const double ZOOM_PER_FRAME = ZOOM_PER_SECOND / FPS;
 
 	for(int i = 0; i < VID_LENGTH * FPS; i++)
