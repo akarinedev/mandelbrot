@@ -3,7 +3,11 @@
 //Standard Libs
 #include <cstdlib>
 #include <cmath>
+
+//I/O Streams
 #include <iostream>
+#include <fstream>
+#include <iomanip>
 
 //String stuff
 #include <string>
@@ -21,16 +25,15 @@ const int CHARS_PER_PIXEL = 3;
 
 static struct option long_options[] =
 {
-	{"l", required_argument, NULL, 'l'}
+	{"l", required_argument, NULL, 'l'},
 	{"x", required_argument, NULL, 'x'},
 	{"y", required_argument, NULL, 'y'},
-	{"framerate", required_argument, NULL, 'r'},
-	{"cx", required_argument, NULL, 'u'},
-	{"cy", required_argument, NULL, 'v'},
-	{"zmstart", optional_argument, NULL, 's'},
-	{"zmend", optional_argument, NULL, 'e'},
-	{"zmrate", optional_argument, NULL, 'z'},
-	{"file", required_argument, NULL, 'f'}
+//	{"framerate", required_argument, NULL, 'r'},
+//	{"cx", required_argument, NULL, 'u'},
+//	{"cy", required_argument, NULL, 'v'},
+//	{"zmstart", optional_argument, NULL, 's'},
+//	{"zmend", optional_argument, NULL, 'e'},
+//	{"zmrate", optional_argument, NULL, 'z'},
 };
 
 int main(int argc, char **argv)
@@ -44,14 +47,13 @@ int main(int argc, char **argv)
 	int framerate;
 	double cx, cy;
 	double zstart, zend, zrate;
-	std::string file;
 
 	while((c = getopt_long_only(argc, argv, "", long_options, &index)) != -1)
 	{
 		switch(c)
 		{
 		case 'l':
-			l = std::stol(optarg);
+			length = std::stol(optarg);
 			break;
 		case 'x':
 			sx = std::stol(optarg);
@@ -77,8 +79,6 @@ int main(int argc, char **argv)
 		case 'z':
 			zrate = std::stod(optarg);
 			break;
-		case 'f':
-			file = optarg;
 		case ':':
 		case '?':
 			std::cout << "Error in inputs" << std::endl;
@@ -86,7 +86,7 @@ int main(int argc, char **argv)
 		}
 	}
 
-	json data;
+	nlohmann::json data;
 
 	for(long i = 0; i < length; i++)
 	{
@@ -94,5 +94,10 @@ int main(int argc, char **argv)
 		data[i]["resy"] = sy;
 	}
 
+	// write prettified JSON to another file
+	//std::ofstream ofstream(file);
+	std::cout << std::setw(4) << data << std::endl;
+
 	return 0;
 }
+
