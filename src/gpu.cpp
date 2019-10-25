@@ -81,3 +81,48 @@ void gpu::mandelbrot(unsigned long* out, frameinfo frame)
 
 	cudaDeviceSynchronize();
 }
+
+__host__
+unsigned long gpu::itercount(frameinfo frame)
+{
+	unsigned long *arr1;
+	cudaMallocManaged(&arr1, frame.resx * frame.resy * sizeof(usigned long));
+	unsigned long *arr2;
+	cudaMallocManaged(&arr2, frame.resx * frame.resy * sizeof(usigned long));
+
+	unsigned long iters = 1;
+
+	for(unsigned long i = 0; i < frame.resx * frame.resy; i++)
+	{
+		arr1[i] = 0;
+	}
+
+	unsigned long diffs = 0;
+
+	while(true)
+	{
+		iters *= 2;
+		frame.iters = iters;
+		gpu::mandelbrot(arr2, frame);
+
+		for(unsigned long i = 0; i < frame.resx * frame.resy; i++)
+		{
+			if(arr2[i] == iters - 1)
+			{
+				arr2[i] = 0;
+			}
+			if(arr1[i] != arr2[i])
+			{
+				diffs++;
+			}
+			arr1[i] = arr2[i];
+		}
+
+		if(((double) diffs) / frame.resx * frame.resy <= 0.01)
+		{
+			cudaFree(arr1);
+			cudaFree(arr2);
+			return iters;
+		}
+	}
+}

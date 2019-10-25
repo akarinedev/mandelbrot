@@ -15,8 +15,9 @@
 
 //Libs
 #include "json.hpp"
-
 #include "getopt.h"
+
+#include "gpu.h"
 
 const int CHARS_PER_PIXEL = 3;
 
@@ -44,7 +45,7 @@ int main(int argc, char **argv)
 	double cx = 0, cy = -1;
 	double zstart = 2, zrate = 0.3333;
 
-	while((c = getopt_long_only(argc, argv, "", long_options, &index)) != -1)
+	while((c = getopt_long_only(argc, argv, "l:x:y:r:u:v:s:z:", long_options, &index)) != -1)
 	{
 		switch(c)
 		{
