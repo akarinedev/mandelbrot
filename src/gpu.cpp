@@ -30,6 +30,25 @@ void gpu::pixelcalc(unsigned long* out, frameinfo frame)
 
 	double zxt, zyt;
 
+	#ifdef OPT_SQR
+	for(long i = 0; i < frame.iters; i++)
+	{
+		zy = (zx + zy);
+		zy *= zy;
+		zy -= zx2;
+		zy -= zy2;
+		zy += cy;
+		zx = zx2 - zy2 + cx;
+		zx2 = zx * zx;
+		zy2 = zy * zy;
+
+		if(zx2 + zy2 >= 4)
+		{
+			out[threadnum] = i;
+			return;
+		}
+	}
+	#else
 	for(long i = 0; i < frame.iters; i++)
 	{
 		zxt = zx2 - zy2 + cx;
@@ -47,6 +66,7 @@ void gpu::pixelcalc(unsigned long* out, frameinfo frame)
 			return;
 		}
 	}
+	#endif
 
 	out[threadnum] = frame.iters;
 	return;
