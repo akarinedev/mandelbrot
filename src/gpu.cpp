@@ -41,11 +41,7 @@ void gpu::pixelcalc(unsigned long* out, frameinfo frame)
 		zx2 = zx * zx;
 		zy2 = zy * zy;
 
-		#ifdef abs
 		if(zx2 + zy2 >= 4)
-		#else
-		if(sqrt(zx2 + zy2) >= 2)
-		#endif
 		{
 			out[threadnum] = i;
 			return;
@@ -86,9 +82,9 @@ __host__
 unsigned long gpu::itercount(frameinfo frame)
 {
 	unsigned long *arr1;
-	cudaMallocManaged(&arr1, frame.resx * frame.resy * sizeof(usigned long));
+	cudaMallocManaged(&arr1, frame.resx * frame.resy * sizeof(unsigned long));
 	unsigned long *arr2;
-	cudaMallocManaged(&arr2, frame.resx * frame.resy * sizeof(usigned long));
+	cudaMallocManaged(&arr2, frame.resx * frame.resy * sizeof(unsigned long));
 
 	unsigned long iters = 1;
 

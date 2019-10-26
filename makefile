@@ -2,7 +2,7 @@ CUDA_DIR := /usr/local/cuda-10.0/
 CUDA_ARCH := sm_75
 
 CXX := clang++-8
-CXX_FLAGS := -x cuda --cuda-path=$(CUDA_DIR) --cuda-gpu-arch=$(CUDA_ARCH) -fPIC -std=c++11 -D OPT_ABS -I libs/ -g
+CXX_FLAGS := -x cuda --cuda-path=$(CUDA_DIR) --cuda-gpu-arch=$(CUDA_ARCH) -fPIC -std=c++11 -I libs/ -g
 
 I_LNK := $(CUDA_DIR)bin/nvcc
 I_LNK_FLAGS := -L$(CUDA_DIR)lib64/ -lcudart_static -lncurses -g

@@ -19,93 +19,44 @@
 //#include "fp.h"
 
 #include <unistd.h>
-#include "getopt.h"
 #include "cuda_profiler_api.h"
+
+#include "json.hpp"
 
 const int CHARS_PER_PIXEL = 3;
 
-static struct option long_options[] =
-{
-	{"x", required_argument, NULL, 'x'},
-	{"y", required_argument, NULL, 'y'},
-	{"framerate", required_argument, NULL, 'r'},
-	{"cx", required_argument, NULL, 'u'},
-	{"cy", required_argument, NULL, 'v'},
-	{"zmstart", optional_argument, NULL, 's'},
-	{"zmend", optional_argument, NULL, 'e'},
-	{"zmrate", optional_argument, NULL, 'z'}
-};
-
 int main(int argc, char **argv)
 {
-	int c;
-
-	int index = 0;
-
-	long sx, sy;
-	int framerate;
-	double cx, cy;
-	double zstart, zend, zrate;
-
-	while((c = getopt_long_only(argc, argv, "", long_options, &index)) != -1)
-	{
-		switch(c)
-		{
-		case 'x':
-			sx = std::stol(optarg);
-			break;
-		case 'y':
-			sy = std::stol(optarg);
-			break;
-		case 'r':
-			framerate = std::stoi(optarg);
-		case 'u':
-			cx = std::stod(optarg);
-		case 'v':
-			cy = std::stod(optarg);
-		case 's':
-			zstart = std::stod(optarg);
-		case 'e':
-			zend = std::stod(optarg);
-		case 'z':
-			zrate = std::stod(optarg);
-
-		}
-	}
-
-	std::cout << "X: " << sx << std::endl;
-
-	return 0;
-}
-
-void headless()
-{
-	frameinfo frame;
-	frame.resx = 1920;
-	frame.resy = 1080;
-
 	unsigned char *colormap = getColorMap(32);
 
+
+	nlohmann::json data;
+	std::cin >> data;
+
+	long length = data["length"];
+
+	long resx = data["frames"][0]["resx"];
+	long resy = data["frames"][0]["resy"];
+
 	unsigned long *out;
-	cudaMallocManaged(&out, frame.resx * frame.resy * sizeof(unsigned long));
+	cudaMallocManaged(&out, resx * resy * sizeof(unsigned long));
 
-	const double VID_LENGTH = 1; //40
-	const double FPS = 2; //30
-	const double ZOOM_PER_SECOND = 0.25; //.333
-	const double ZOOM_PER_FRAME = ZOOM_PER_SECOND / FPS;
-
-	for(int i = 0; i < VID_LENGTH * FPS; i++)
+	for(int i = 0; i < length; i++)
 	{
-		frame.centerx = 0;
-		frame.centery = -1;
+		auto df = data["frames"][i];
 
-		frame.scale = 2 / pow(10, i * ZOOM_PER_FRAME);
-		frame.iters = 100000;
+		frameinfo frame;
+		frame.resx = df["resx"];
+		frame.resy = df["resy"];
+		frame.centerx = df["cx"];
+		frame.centery = df["cy"];
+		frame.scale = df["z"];
+		frame.iters = 1000;
 
-		std::cout << "Rendering Frame #" << i << " / " << VID_LENGTH * FPS << ", scale=" << frame.scale << std::endl;
+		std::cout << "Rendering Frame #" << i << " / " << length << ", scale=" << frame.scale << std::endl;
 		gpu::mandelbrot(out, frame);
 
-		char name[] = "100";
+		char name[100];
 		snprintf(name, 100, "imgs/%08d.tga", i);
 
 		std::cout << "Saving Image: " << name << std::endl;
@@ -115,6 +66,8 @@ void headless()
 	cudaFree(out);
 
 	free(colormap);
+
+	return 0;
 }
 
 void saveImage(char *name, unsigned long *in, frameinfo frame, unsigned char *colormap, int numcolors)
