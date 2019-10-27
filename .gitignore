@@ -10,3 +10,6 @@ render
 #Outputs
 imgs/
 movs/
+
+#Config files
+**/*.conf
