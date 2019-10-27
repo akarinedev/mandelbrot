@@ -22,6 +22,71 @@ void gpu::pixelcalc(unsigned long* out, frameinfo frame)
 	double cx = frame.centerx - frame.scalex + frame.deltax * x;
 	double cy = frame.centery - frame.scaley + frame.deltay * y;
 
+	#ifdef OPT_PTX
+
+	long iters;
+	long maxiters = frame.iters;
+
+	asm(
+		".reg .u64 i;"
+		".reg .f64 cx;"
+		".reg .f64 cy;"
+		".reg .f64 x;"
+		".reg .f64 y;"
+		".reg .f64 xt;"
+		".reg .f64 yt;"
+		".reg .f64 x2;"
+		".reg .f64 y2;"
+		".reg .f64 val;"
+		".reg .pred p;"
+		"mov.u64 i, 0;"
+		"mov.f64 cx, %2;"
+		"mov.f64 cy, %3;"
+		"mov.f64 x, 0.0;"
+		"mov.f64 y, 0.0;"
+		"mov.f64 x2, 0.0;"
+		"mov.f64 y2, 0.0;"
+		"loop:"
+			//Values
+			"sub.f64 xt, x2, y2;"
+			"add.f64 xt, xt, cx;"
+			"mul.f64 yt, x, y;"
+			"mad.rz.f64 yt, yt, 2.0, cy;"
+
+			//Moves
+			"mov.f64 x, xt;"
+			"mov.f64 y, yt;"
+
+			//Squares
+			"mul.f64 x2, x, x;"
+			"mul.f64 y2, y, y;"
+
+			//If greater than 4
+			"add.f64 val, x2, y2;"
+			"setp.ge.f64 p, val, 4.0;"
+			"@p bra done;"
+
+			"setp.ge.u64 p, i, %1;"
+			"@p bra default;"
+			//Increment counter
+			"add.u64 i, i, 1;"
+
+			"bra loop;"
+		"default:"
+		"mov.u64 %0, %1;"
+		"done:"
+		"mov.u64 %0, i;"
+		:
+		"=l"(iters) :
+		"l"(maxiters),
+		"d"(cx),
+		"d"(cy)
+	);
+
+	out[threadnum] = iters;
+
+	#else
+
 	double zx = 0.0;
 	double zy = 0.0;
 
@@ -31,6 +96,7 @@ void gpu::pixelcalc(unsigned long* out, frameinfo frame)
 	double zxt, zyt;
 
 	#ifdef OPT_SQR
+
 	for(long i = 0; i < frame.iters; i++)
 	{
 		zy = (zx + zy);
@@ -83,7 +149,7 @@ void gpu::pixelcalc(unsigned long* out, frameinfo frame)
 		{
 			double q = (zx - .25) * (zx - .25) + zy2;
 			double q2 = q * (q + x - .25);
-			if(q2 > .25 * zy2)
+			if(q2 <= .25 * zy2)
 			{
 				out[threadnum] = frame.iters;
 				return;
@@ -101,6 +167,8 @@ void gpu::pixelcalc(unsigned long* out, frameinfo frame)
 
 	out[threadnum] = frame.iters;
 	return;
+
+	#endif
 }
 
 __host__

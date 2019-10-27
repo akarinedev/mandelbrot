@@ -3,7 +3,7 @@ CUDA_ARCH := sm_75
 
 CXX := clang++-8
 CXX_FLAGS := -x cuda --cuda-path=$(CUDA_DIR) --cuda-gpu-arch=$(CUDA_ARCH) -fPIC -std=c++11 -I libs/ -g
-OPT_FLAGS := -D OPT_BULB
+OPT_FLAGS := -D OPT_PTX
 
 I_LNK := $(CUDA_DIR)bin/nvcc
 I_LNK_FLAGS := -L$(CUDA_DIR)lib64/ -lcudart_static -lncurses -g
