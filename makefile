@@ -2,7 +2,8 @@ CUDA_DIR := /usr/local/cuda-10.0/
 CUDA_ARCH := sm_75
 
 CXX := clang++-8
-CXX_FLAGS := -x cuda --cuda-path=$(CUDA_DIR) --cuda-gpu-arch=$(CUDA_ARCH) -fPIC -std=c++11 -I libs/ -g -D OPT_SQR
+CXX_FLAGS := -x cuda --cuda-path=$(CUDA_DIR) --cuda-gpu-arch=$(CUDA_ARCH) -fPIC -std=c++11 -I libs/ -g
+OPT_FLAGS := -D OPT_BULB
 
 I_LNK := $(CUDA_DIR)bin/nvcc
 I_LNK_FLAGS := -L$(CUDA_DIR)lib64/ -lcudart_static -lncurses -g
@@ -24,7 +25,7 @@ OBJ := $(patsubst $(SRC_DIR)/%.$(SRC_EXT), $(OBJ_DIR)/%.$(OBJ_EXT), $(SRC))
 
 #CPP to O
 $(OBJ_DIR)/%.$(OBJ_EXT): $(SRC_DIR)/%.$(SRC_EXT)
-	$(CXX) $(CXX_FLAGS) -c $< -o $@
+	$(CXX) $(CXX_FLAGS) $(OPT_FLAGS) -c $< -o $@
 
 all: interactive prepare render
 
