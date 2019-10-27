@@ -45,18 +45,16 @@ void gpu::pixelcalc(unsigned long* out, frameinfo frame)
 		#ifdef OPT_BULB
 		if(i % 20 == 0)
 		{
-			double p = (zx + .25);
-			p *= p;
-			p += zy*zy;
+			double p = (zx-.25) * (zx-.25) + zy2;
 			double sqrp = sqrt(p);
-			if(x > sqrp - 2 * p + .25)
+			if(zx > (sqrp - 2 * p + .25))
 			{
-				out[threadnum] = i;
+				out[threadnum] = frame.iters;
 				return;
 			}
-			if((x+1)*(x+1) + y*y > .0625)
+			if((zx+1)*(zx+1) + zy2 > .0625)
 			{
-				out[threadnum] = i;
+				out[threadnum] = frame.iters;
 				return;
 			}
 		}
@@ -83,18 +81,11 @@ void gpu::pixelcalc(unsigned long* out, frameinfo frame)
 		#ifdef OPT_BULB
 		if(i % 20 == 0)
 		{
-			double p = (zx + .25);
-			p *= p;
-			p += zy*zy;
-			double sqrp = sqrt(p);
-			if(x > sqrp - 2 * p + .25)
+			double q = (zx - .25) * (zx - .25) + zy2;
+			double q2 = q * (q + x - .25);
+			if(q2 > .25 * zy2)
 			{
-				out[threadnum] = i;
-				return;
-			}
-			if((x+1)*(x+1) + y*y > .0625)
-			{
-				out[threadnum] = i;
+				out[threadnum] = frame.iters;
 				return;
 			}
 		}
