@@ -33,8 +33,8 @@ void gpu::pixelcalc(unsigned long* out, frameinfo frame)
 		".reg .f64 cy;"
 		".reg .f64 x;"
 		".reg .f64 y;"
-		".reg .f64 xt;"
-		".reg .f64 yt;"
+//		".reg .f64 xt;"
+//		".reg .f64 yt;"
 		".reg .f64 x2;"
 		".reg .f64 y2;"
 		".reg .f64 val;"
@@ -48,14 +48,20 @@ void gpu::pixelcalc(unsigned long* out, frameinfo frame)
 		"mov.f64 y2, 0.0;"
 		"loop:"
 			//Values
-			"sub.f64 xt, x2, y2;"
-			"add.f64 xt, xt, cx;"
-			"mul.f64 yt, x, y;"
-			"mad.rz.f64 yt, yt, 2.0, cy;"
+			//yt = x * y
+			"mul.f64 y, x, y;"
+			//yt = 2 * yt or yt + yt
+			"add.f64 y, y, y;"
+			//yt = yt + cy
+			"add.f64 y, y, cy;"
+			//xt = x^2 - y^2
+			"sub.f64 x, x2, y2;"
+			//xt = xt + cx
+			"add.f64 x, x, cx;"
 
 			//Moves
-			"mov.f64 x, xt;"
-			"mov.f64 y, yt;"
+//			"mov.f64 x, xt;"
+//			"mov.f64 y, yt;"
 
 			//Squares
 			"mul.f64 x2, x, x;"
@@ -73,7 +79,7 @@ void gpu::pixelcalc(unsigned long* out, frameinfo frame)
 
 			"bra loop;"
 		"default:"
-		"mov.u64 %0, %1;"
+		"mov.u64 i, %1;"
 		"done:"
 		"mov.u64 %0, i;"
 		:
