@@ -115,7 +115,7 @@ void gpu::pixelcalc(unsigned long* out, frameinfo frame)
 		zy2 = zy * zy;
 
 		#ifdef OPT_BULB
-		if(i % 20 == 0)
+		if(i % 10 == 0)
 		{
 			double p = (zx-.25) * (zx-.25) + zy2;
 			double sqrp = sqrt(p);

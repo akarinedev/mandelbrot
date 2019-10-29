@@ -51,7 +51,7 @@ int main(int argc, char **argv)
 		frame.centerx = df["cx"];
 		frame.centery = df["cy"];
 		frame.scale = df["z"];
-		frame.iters = 10000;
+		frame.iters = 1000;
 
 		std::cout << "Rendering Frame #" << i << " / " << length << ", scale=" << frame.scale << std::endl;
 		gpu::mandelbrot(out, frame);

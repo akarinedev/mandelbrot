@@ -62,16 +62,16 @@ int main(int argc, char **argv)
 			framerate = std::stoi(optarg);
 			break;
 		case 'u':
-			cx = std::stod(optarg);
+			cx = std::stod(optarg, NULL);
 			break;
 		case 'v':
-			cy = std::stod(optarg);
+			cy = std::stod(optarg, NULL);
 			break;
 		case 's':
-			zstart = std::stod(optarg);
+			zstart = std::stod(optarg, NULL);
 			break;
 		case 'z':
-			zrate = std::stod(optarg);
+			zrate = std::stod(optarg, NULL);
 			break;
 		case ':':
 		case '?':
